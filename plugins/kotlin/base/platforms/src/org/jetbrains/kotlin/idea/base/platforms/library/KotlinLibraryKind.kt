@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.js.JsPlatforms
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
+import org.jetbrains.kotlin.platform.brs.BrsPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
 
@@ -58,6 +59,15 @@ object KotlinCommonLibraryKind : PersistentLibraryKind<DummyLibraryProperties>("
 object KotlinNativeLibraryKind : PersistentLibraryKind<DummyLibraryProperties>("kotlin.native"), KotlinLibraryKind {
     override val compilerPlatform: TargetPlatform
         get() = NativePlatforms.unspecifiedNativePlatform
+
+    override fun createDefaultProperties(): DummyLibraryProperties {
+        return DummyLibraryProperties.INSTANCE
+    }
+}
+
+object KotlinBrsLibraryKind : PersistentLibraryKind<DummyLibraryProperties>("kotlin.brs"), KotlinLibraryKind {
+    override val compilerPlatform: TargetPlatform
+        get() = BrsPlatforms.defaultBrsPlatform
 
     override fun createDefaultProperties(): DummyLibraryProperties {
         return DummyLibraryProperties.INSTANCE

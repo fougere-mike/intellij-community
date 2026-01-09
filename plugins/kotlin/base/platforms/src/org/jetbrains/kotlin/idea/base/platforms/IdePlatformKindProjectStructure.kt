@@ -16,6 +16,8 @@ import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.impl.*
 import org.jetbrains.kotlin.platform.js.JsPlatforms
+import org.jetbrains.kotlin.platform.brs.BrsPlatforms
+import org.jetbrains.kotlin.platform.impl.BrsIdePlatformKind
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.platform.wasm.WasmPlatforms
 import org.jetbrains.kotlin.serialization.deserialization.METADATA_FILE_EXTENSION
@@ -31,6 +33,7 @@ class IdePlatformKindProjectStructure(private val project: Project) {
             is JsIdePlatformKind -> Kotlin2JsCompilerArgumentsHolder.getInstance(project).settings
             is WasmIdePlatformKind -> Kotlin2JsCompilerArgumentsHolder.getInstance(project).settings
             is NativeIdePlatformKind -> null
+            is BrsIdePlatformKind -> null
             else -> error("Unsupported platform kind: $platformKind")
         }
     }
@@ -47,7 +50,7 @@ class IdePlatformKindProjectStructure(private val project: Project) {
             is JsIdePlatformKind -> { library ->
                 KotlinJavaScriptStdlibDetectorFacility.getStdlibVersion(project, library)
             }
-            is WasmIdePlatformKind, is NativeIdePlatformKind -> { _ -> null }
+            is WasmIdePlatformKind, is NativeIdePlatformKind, is BrsIdePlatformKind -> { _ -> null }
             else -> error("Unsupported platform kind: $platformKind")
         }
     }
@@ -90,6 +93,7 @@ class IdePlatformKindProjectStructure(private val project: Project) {
                 file.isKlibLibraryRootForPlatform(WasmPlatforms.wasmJs) -> WasmJsIdePlatformKind
                 file.isKlibLibraryRootForPlatform(WasmPlatforms.unspecifiedWasmPlatform) -> WasmJsIdePlatformKind
                 file.isKlibLibraryRootForPlatform(NativePlatforms.unspecifiedNativePlatform) -> NativeIdePlatformKind
+                file.isKlibLibraryRootForPlatform(BrsPlatforms.defaultBrsPlatform) -> BrsIdePlatformKind
                 else -> null
             }
         }
@@ -102,6 +106,7 @@ class IdePlatformKindProjectStructure(private val project: Project) {
                 is WasmJsIdePlatformKind -> KotlinWasmJsLibraryKind
                 is WasmWasiIdePlatformKind -> KotlinWasmWasiLibraryKind
                 is NativeIdePlatformKind -> KotlinNativeLibraryKind
+                is BrsIdePlatformKind -> KotlinBrsLibraryKind
                 else -> error("Unsupported platform kind: $platformKind")
             }
         }
