@@ -38,14 +38,15 @@ class NativePlatformKindResolution : IdePlatformKindResolution {
         languageVersionSettings: LanguageVersionSettings,
         moduleDescriptor: ModuleDescriptor
     ): PackageFragmentProvider? {
-        return (moduleInfo as? NativeKlibLibraryInfo)
-            ?.resolvedKotlinLibrary
-            ?.createKlibPackageFragmentProvider(
+        val nativeLibInfo = moduleInfo as? NativeKlibLibraryInfo ?: return null
+        return nativeLibInfo.resolvedKotlinLibrary
+            .createKlibPackageFragmentProvider(
                 storageManager = storageManager,
                 metadataModuleDescriptorFactory = metadataFactories.DefaultDeserializedDescriptorFactory,
                 languageVersionSettings = languageVersionSettings,
                 moduleDescriptor = moduleDescriptor,
-                lookupTracker = LookupTracker.DO_NOTHING
+                lookupTracker = LookupTracker.DO_NOTHING,
+                isStdlib = nativeLibInfo.isStdlib
             )
     }
 
@@ -123,11 +124,20 @@ internal fun KotlinLibrary.createKlibPackageFragmentProvider(
     metadataModuleDescriptorFactory: KlibMetadataModuleDescriptorFactory,
     languageVersionSettings: LanguageVersionSettings,
     moduleDescriptor: ModuleDescriptor,
-    lookupTracker: LookupTracker
+    lookupTracker: LookupTracker,
+    isStdlib: Boolean = false
 ): PackageFragmentProvider? {
     if (!compatibilityInfo.isCompatible) return null
 
     val packageFragmentNames = CachingIdeKlibMetadataLoader.loadModuleHeader(this).packageFragmentNameList
+
+    // For stdlib klibs, add the function interface package fragment provider
+    // This provides synthetic FunctionN class descriptors that are needed for lambda expressions
+    val functionInterfaceAddend = if (isStdlib) {
+        functionInterfacePackageFragmentProvider(storageManager, moduleDescriptor)
+    } else {
+        null
+    }
 
     return metadataModuleDescriptorFactory.createPackageFragmentProvider(
         library = this,
@@ -136,7 +146,7 @@ internal fun KotlinLibrary.createKlibPackageFragmentProvider(
         storageManager = storageManager,
         moduleDescriptor = moduleDescriptor,
         configuration = KlibCompilerDeserializationConfiguration(languageVersionSettings),
-        compositePackageFragmentAddend = null,
+        compositePackageFragmentAddend = functionInterfaceAddend,
         lookupTracker = lookupTracker
     )
 }

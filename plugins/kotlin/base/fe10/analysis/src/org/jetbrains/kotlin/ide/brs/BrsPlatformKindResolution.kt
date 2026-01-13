@@ -38,14 +38,15 @@ class BrsPlatformKindResolution : IdePlatformKindResolution {
         languageVersionSettings: LanguageVersionSettings,
         moduleDescriptor: ModuleDescriptor
     ): PackageFragmentProvider? {
-        return (moduleInfo as? BrsKlibLibraryInfo)
-            ?.resolvedKotlinLibrary
-            ?.createKlibPackageFragmentProvider(
+        val brsLibInfo = moduleInfo as? BrsKlibLibraryInfo ?: return null
+        return brsLibInfo.resolvedKotlinLibrary
+            .createKlibPackageFragmentProvider(
                 storageManager = storageManager,
                 metadataModuleDescriptorFactory = metadataFactories.DefaultDeserializedDescriptorFactory,
                 languageVersionSettings = languageVersionSettings,
                 moduleDescriptor = moduleDescriptor,
-                lookupTracker = LookupTracker.DO_NOTHING
+                lookupTracker = LookupTracker.DO_NOTHING,
+                isStdlib = brsLibInfo.isStdlib
             )
     }
 
