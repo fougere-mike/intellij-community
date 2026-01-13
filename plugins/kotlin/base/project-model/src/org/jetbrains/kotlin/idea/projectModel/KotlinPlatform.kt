@@ -7,7 +7,8 @@ enum class KotlinPlatform(val id: String) {
     JS("js"),
     WASM("wasm"),
     NATIVE("native"),
-    ANDROID("androidJvm");
+    ANDROID("androidJvm"),
+    BRS("brs");
 
     companion object {
         fun byId(id: String) = values().firstOrNull { it.id == id }

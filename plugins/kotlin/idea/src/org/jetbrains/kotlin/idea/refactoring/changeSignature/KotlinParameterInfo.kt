@@ -283,6 +283,8 @@ private class OverridingTypeCheckerContext(private val matchingTypeConstructors:
         }
     }
 
+    override fun usePreciseSimplificationToFlexibleLowerConstraint(): Boolean = false
+
     companion object {
         fun createChecker(superDescriptor: CallableDescriptor, subDescriptor: CallableDescriptor): TypeCheckerState {
             val context = OverridingTypeCheckerContext(subDescriptor.typeParameters.zip(superDescriptor.typeParameters).associate {

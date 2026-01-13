@@ -65,10 +65,10 @@ object KotlinBrsLibraryKind : PersistentLibraryKind<DummyLibraryProperties>("kot
 
 ### 3. Library Definitions
 
-Updated `.idea/libraries/` XML files to use the forked Kotlin version `2.1.255-SNAPSHOT`:
+Updated `.idea/libraries/` XML files to use the forked Kotlin version `2.2.255-SNAPSHOT`:
 
-- `kotlinc_kotlin_compiler_common.xml` - Uses `kotlin-compiler-common-for-ide:2.1.255-SNAPSHOT`
-- `kotlinc_kotlin_jps_common.xml` - Uses `kotlin-jps-common-for-ide:2.1.255-SNAPSHOT`
+- `kotlinc_kotlin_compiler_common.xml` - Uses `kotlin-compiler-common-for-ide:2.2.255-SNAPSHOT`
+- `kotlinc_kotlin_jps_common.xml` - Uses `kotlin-jps-common-for-ide:2.2.255-SNAPSHOT`
 
 ## Forked Kotlin Compiler Setup
 
@@ -84,7 +84,7 @@ cd ../Kotlin
           --no-configuration-cache
 
 # Publish to Maven local
-./gradlew publishToMavenLocal -Pversion=2.1.255-SNAPSHOT --no-configuration-cache
+./gradlew publishToMavenLocal -Pversion=2.2.255-SNAPSHOT --no-configuration-cache
 ```
 
 The forked Kotlin's `build.gradle.kts` was modified to include `:core:compiler.common.brightscript` in:
@@ -93,16 +93,12 @@ The forked Kotlin's `build.gradle.kts` was modified to include `:core:compiler.c
 
 ## Building RokuStudio
 
-```bash
-# Build only the Kotlin plugin
-./gradlew :plugins:kotlin:buildPlugin
+RokuStudio is based on intellij-community, which uses IntelliJ's internal build system rather than Gradle. Builds must be performed from within a standalone IntelliJ IDEA instance:
 
-# Build full IDE distribution
-./gradlew :community-main:buildDist
+1. Open this project in IntelliJ IDEA
+2. Use **Build > Build Project** to compile
 
-# Build macOS installer
-./gradlew :community-main:buildMacInstaller
-```
+**Note:** Ensure the forked Kotlin compiler artifacts have been published to Maven local (see "Forked Kotlin Compiler Setup" above) before building.
 
 ## Verification
 
@@ -118,7 +114,7 @@ After building, open `roku-test-app` in RokuStudio and verify:
 
 All changes are on the `brs-platform-support-new` branch, based on tag `idea/243.25659.59` (IntelliJ IDEA 2024.3.4).
 
-This version was chosen for compatibility with the forked Kotlin compiler which is based on Kotlin 2.1.20. IntelliJ 2024.3.4 bundles Kotlin 2.1.20-ij243-60, making it API-compatible with our forked compiler's `2.1.255-SNAPSHOT` version.
+This version was chosen for compatibility with the forked Kotlin compiler which is based on Kotlin 2.2.0. IntelliJ 2024.3.4 bundles Kotlin 2.1.20-ij243-60, making it API-compatible with our forked compiler's `2.2.255-SNAPSHOT` version.
 
 ## Maintenance Notes
 

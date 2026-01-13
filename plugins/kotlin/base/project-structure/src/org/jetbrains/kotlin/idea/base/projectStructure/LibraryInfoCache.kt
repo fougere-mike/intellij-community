@@ -252,6 +252,7 @@ class LibraryInfoCache(project: Project) : Disposable {
             is JsIdePlatformKind -> createLibraryInfos(key, platformKind, ::JsKlibLibraryInfo, ::JsMetadataLibraryInfo)
             is WasmIdePlatformKind -> createLibraryInfos(key, platformKind, ::WasmKlibLibraryInfo, ::WasmMetadataLibraryInfo)
             is NativeIdePlatformKind -> createLibraryInfos(key, platformKind, ::NativeKlibLibraryInfo, ::NativeMetadataLibraryInfo)
+            is BrsIdePlatformKind -> createLibraryInfos(key, platformKind, ::BrsKlibLibraryInfo, ::BrsMetadataLibraryInfo)
             else -> error("Unexpected platform kind: $platformKind")
         }.also {
             require(it.isNotEmpty()) { "Must be not empty for consistency with LibraryInfoCache#deduplicatedLibrary" }

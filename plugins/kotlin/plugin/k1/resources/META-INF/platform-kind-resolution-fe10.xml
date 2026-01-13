@@ -6,5 +6,6 @@
     <idePlatformKindResolution implementation="org.jetbrains.kotlin.caches.resolve.WasmWasiPlatformKindResolution"/>
     <idePlatformKindResolution implementation="org.jetbrains.kotlin.caches.resolve.CommonPlatformKindResolution"/>
     <idePlatformKindResolution implementation="org.jetbrains.kotlin.ide.konan.NativePlatformKindResolution"/>
+    <idePlatformKindResolution implementation="org.jetbrains.kotlin.ide.brs.BrsPlatformKindResolution"/>
   </extensions>
 </idea-plugin>

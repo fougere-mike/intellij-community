@@ -10,9 +10,7 @@
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2025.2.2/rd-text-2025.2.2.jar!/" />
     </CLASSES>
-    <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2025.2.2/rd-text-2025.2.2-javadoc.jar!/" />
-    </JAVADOC>
+    <JAVADOC />
     <SOURCES>
       <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2025.2.2/rd-text-2025.2.2-sources.jar!/" />
     </SOURCES>

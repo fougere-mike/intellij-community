@@ -13,10 +13,13 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.NativePlatform
 import org.jetbrains.kotlin.platform.konan.isNative
+import org.jetbrains.kotlin.platform.brs.BrsPlatform
+import org.jetbrains.kotlin.platform.brs.isBrs
 import org.jetbrains.kotlin.platform.wasm.*
 import org.jetbrains.kotlin.resolve.*
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 import org.jetbrains.kotlin.resolve.konan.platform.NativePlatformAnalyzerServices
+import org.jetbrains.kotlin.brs.resolve.BrsPlatformAnalyzerServices
 import org.jetbrains.kotlin.wasm.resolve.WasmJsPlatformAnalyzerServices
 import org.jetbrains.kotlin.wasm.resolve.WasmPlatformAnalyzerServices
 import org.jetbrains.kotlin.wasm.resolve.WasmWasiPlatformAnalyzerServices
@@ -35,6 +38,7 @@ fun TargetPlatform.findAnalyzerServices(project: Project): PlatformDependentAnal
     isWasmWasi() -> WasmWasiPlatformAnalyzerServices
     isWasm() -> WasmPlatformAnalyzerServices
     isNative() -> NativePlatformAnalyzerServices
+    isBrs() -> BrsPlatformAnalyzerServices
     else -> throw IllegalStateException("Unknown platform $this")
 }
 
@@ -49,5 +53,6 @@ fun SimplePlatform.findAnalyzerServices(): PlatformDependentAnalyzerServices = w
     }
     is WasmPlatform -> WasmPlatformAnalyzerServices
     is NativePlatform -> NativePlatformAnalyzerServices
+    is BrsPlatform -> BrsPlatformAnalyzerServices
     else -> throw IllegalStateException("Unknown platform $this")
 }

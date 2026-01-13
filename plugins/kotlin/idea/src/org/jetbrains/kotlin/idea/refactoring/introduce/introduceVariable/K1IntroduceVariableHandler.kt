@@ -69,6 +69,8 @@ object K1IntroduceVariableHandler : KotlinIntroduceVariableHandler() {
                 require(c2 is TypeConstructor)
                 return compareDescriptors(project, c1.declarationDescriptor, c2.declarationDescriptor)
             }
+
+            override fun usePreciseSimplificationToFlexibleLowerConstraint(): Boolean = false
         }
 
         override fun equalTypes(a: KotlinType, b: KotlinType): Boolean = with(NewKotlinTypeChecker.Default) {

@@ -60,6 +60,7 @@
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10WasmWasiIdePlatformKindTooling"/>
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10NativeIdePlatformKindTooling"/>
     <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10CommonIdePlatformKindTooling"/>
+    <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.base.fe10.codeInsight.tooling.Fe10BrsIdePlatformKindTooling"/>
   </extensions>
 
   <resource-bundle>messages.KotlinBundle</resource-bundle>

@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.library.*
 import org.jetbrains.kotlin.library.impl.BuiltInsPlatform
 import org.jetbrains.kotlin.platform.*
 import org.jetbrains.kotlin.platform.jvm.isJvm
+import org.jetbrains.kotlin.platform.brs.isBrs
 import org.jetbrains.kotlin.platform.konan.isNative
 import org.jetbrains.kotlin.platform.wasm.WasmPlatformUnspecifiedTarget
 import org.jetbrains.kotlin.platform.wasm.WasmPlatformWithTarget
@@ -101,6 +102,7 @@ private fun TargetPlatform.toBuiltInsPlatform() = when {
     isJvm() -> BuiltInsPlatform.JVM
     isJs() -> BuiltInsPlatform.JS
     isWasm() -> BuiltInsPlatform.WASM
+    isBrs() -> BuiltInsPlatform.BRS
     else -> throw IllegalArgumentException("Unknown platform $this")
 }
 

@@ -1,13 +1,13 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-compiler-common" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-common-for-ide:2.1.255-SNAPSHOT">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-common-for-ide:2.2.255-SNAPSHOT">
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.1.255-SNAPSHOT/kotlin-compiler-common-for-ide-2.1.255-SNAPSHOT.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.2.255-SNAPSHOT/kotlin-compiler-common-for-ide-2.2.255-SNAPSHOT.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.1.255-SNAPSHOT/kotlin-compiler-common-for-ide-2.1.255-SNAPSHOT-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-common-for-ide/2.2.255-SNAPSHOT/kotlin-compiler-common-for-ide-2.2.255-SNAPSHOT-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

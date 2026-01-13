@@ -45,6 +45,7 @@ import org.jetbrains.kotlin.platform.impl.WasmIdePlatformKind
 import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
+import org.jetbrains.kotlin.platform.brs.BrsPlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import org.jetbrains.kotlin.platform.wasm.WasmPlatform
@@ -130,6 +131,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 is JsPlatform -> KotlinPlatform.JS in projectPlatforms
                 is WasmPlatform -> KotlinPlatform.WASM in projectPlatforms
                 is NativePlatform -> KotlinPlatform.NATIVE in projectPlatforms
+                is BrsPlatform -> KotlinPlatform.BRS in projectPlatforms
                 else -> true
             }
         }

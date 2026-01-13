@@ -93,7 +93,8 @@ object CompilerArgumentsSerializer {
         "M" to K2MetadataCompilerArguments::class.java,
         "N" to K2NativeCompilerArguments::class.java,
         "F" to FakeK2NativeCompilerArguments::class.java,
-        "D" to CommonCompilerArguments.DummyImpl::class.java
+        "D" to CommonCompilerArguments.DummyImpl::class.java,
+        "B" to K2BrsCompilerArguments::class.java
     )
 
     fun serializeToString(commonCompilerArguments: CommonCompilerArguments?): String? = commonCompilerArguments?.let {

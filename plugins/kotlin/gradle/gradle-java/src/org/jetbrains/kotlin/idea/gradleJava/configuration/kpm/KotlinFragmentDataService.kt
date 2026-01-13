@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.gradleJava.configuration.GradleProjectImportHandler
 import org.jetbrains.kotlin.idea.gradleJava.findKotlinPluginVersion
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
+import org.jetbrains.kotlin.platform.brs.BrsPlatforms
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.CommonPlatforms
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -114,6 +115,7 @@ private fun configureFacetByFragmentData(
             .mapNotNull { KonanTarget.predefinedTargets[it.konanTarget] }
             .ifNotEmpty { NativePlatforms.nativePlatformByTargets(this) }
             ?: NativePlatforms.unspecifiedNativePlatform
+        KotlinPlatform.BRS -> BrsPlatforms.defaultBrsPlatform
     }
 
     val languageSettings = fragmentDataNode.data.languageSettings
