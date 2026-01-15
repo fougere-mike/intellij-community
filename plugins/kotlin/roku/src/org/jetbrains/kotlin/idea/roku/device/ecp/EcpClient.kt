@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.roku.device.model.RokuDeviceInfo
 import org.w3c.dom.Element
 import java.net.HttpURLConnection
 import java.net.URL
-import java.util.Base64
+import java.security.MessageDigest
 import javax.xml.parsers.DocumentBuilderFactory
 
 /**
@@ -81,7 +81,7 @@ class EcpClient {
     /**
      * Tests authentication credentials against a Roku device.
      *
-     * Roku developer mode uses HTTP Basic Auth on the developer web interface
+     * Roku developer mode uses HTTP Digest Auth on the developer web interface
      * which runs on port 80 (not the ECP port 8060).
      *
      * @param ipAddress The IP address of the Roku device
@@ -95,21 +95,58 @@ class EcpClient {
         password: String
     ): AuthResult = withContext(Dispatchers.IO) {
         try {
-            // Roku developer installer web interface runs on port 80, not ECP port 8060
+            // Step 1: Make initial request to get the WWW-Authenticate challenge
             val url = URL("http://$ipAddress:80/")
-            val connection = url.openConnection() as HttpURLConnection
+            val initialConnection = url.openConnection() as HttpURLConnection
 
+            val digestChallenge: DigestChallenge
             try {
-                connection.connectTimeout = CONNECT_TIMEOUT_MS
-                connection.readTimeout = READ_TIMEOUT_MS
-                connection.requestMethod = "GET"
+                initialConnection.connectTimeout = CONNECT_TIMEOUT_MS
+                initialConnection.readTimeout = READ_TIMEOUT_MS
+                initialConnection.requestMethod = "GET"
 
-                // Add basic auth header
-                val credentials = "$username:$password"
-                val encodedCredentials = Base64.getEncoder().encodeToString(credentials.toByteArray())
-                connection.setRequestProperty("Authorization", "Basic $encodedCredentials")
+                val responseCode = initialConnection.responseCode
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    // No auth required - shouldn't happen but handle it
+                    LOG.info("No authentication required for $ipAddress")
+                    return@withContext AuthResult.Success
+                }
 
-                when (connection.responseCode) {
+                if (responseCode != HttpURLConnection.HTTP_UNAUTHORIZED) {
+                    LOG.warn("Unexpected response from $ipAddress: HTTP $responseCode")
+                    return@withContext AuthResult.Error("HTTP $responseCode")
+                }
+
+                // Parse WWW-Authenticate header
+                val wwwAuth = initialConnection.getHeaderField("WWW-Authenticate")
+                if (wwwAuth == null || !wwwAuth.startsWith("Digest ")) {
+                    LOG.warn("Expected Digest auth but got: $wwwAuth")
+                    return@withContext AuthResult.Error("Server doesn't support Digest authentication")
+                }
+
+                digestChallenge = parseDigestChallenge(wwwAuth)
+            } finally {
+                initialConnection.disconnect()
+            }
+
+            // Step 2: Make authenticated request with Digest auth
+            val authConnection = url.openConnection() as HttpURLConnection
+            try {
+                authConnection.connectTimeout = CONNECT_TIMEOUT_MS
+                authConnection.readTimeout = READ_TIMEOUT_MS
+                authConnection.requestMethod = "GET"
+
+                // Calculate and set the Authorization header
+                val authHeader = calculateDigestAuthHeader(
+                    username = username,
+                    password = password,
+                    method = "GET",
+                    uri = "/",
+                    challenge = digestChallenge
+                )
+                authConnection.setRequestProperty("Authorization", authHeader)
+
+                when (authConnection.responseCode) {
                     HttpURLConnection.HTTP_OK -> {
                         LOG.info("Authentication successful for $ipAddress")
                         AuthResult.Success
@@ -119,12 +156,12 @@ class EcpClient {
                         AuthResult.InvalidCredentials
                     }
                     else -> {
-                        LOG.warn("Authentication failed for $ipAddress: HTTP ${connection.responseCode}")
-                        AuthResult.Error("HTTP ${connection.responseCode}")
+                        LOG.warn("Authentication failed for $ipAddress: HTTP ${authConnection.responseCode}")
+                        AuthResult.Error("HTTP ${authConnection.responseCode}")
                     }
                 }
             } finally {
-                connection.disconnect()
+                authConnection.disconnect()
             }
         } catch (e: java.net.ConnectException) {
             LOG.warn("Developer mode may not be enabled on $ipAddress: ${e.message}")
@@ -133,6 +170,100 @@ class EcpClient {
             LOG.warn("Authentication test failed for $ipAddress", e)
             AuthResult.Error(e.message ?: "Unknown error")
         }
+    }
+
+    /**
+     * Parses a Digest authentication challenge from the WWW-Authenticate header.
+     */
+    private fun parseDigestChallenge(header: String): DigestChallenge {
+        val params = mutableMapOf<String, String>()
+
+        // Remove "Digest " prefix and parse key=value pairs
+        val content = header.removePrefix("Digest ").trim()
+
+        // Parse parameters (handles both quoted and unquoted values)
+        val regex = """(\w+)=(?:"([^"]+)"|([^,\s]+))""".toRegex()
+        regex.findAll(content).forEach { match ->
+            val key = match.groupValues[1]
+            val value = match.groupValues[2].ifEmpty { match.groupValues[3] }
+            params[key] = value
+        }
+
+        return DigestChallenge(
+            realm = params["realm"] ?: "",
+            nonce = params["nonce"] ?: "",
+            qop = params["qop"],
+            opaque = params["opaque"],
+            algorithm = params["algorithm"] ?: "MD5"
+        )
+    }
+
+    /**
+     * Calculates the Digest authentication header value per RFC 2617.
+     */
+    private fun calculateDigestAuthHeader(
+        username: String,
+        password: String,
+        method: String,
+        uri: String,
+        challenge: DigestChallenge
+    ): String {
+        val nc = "00000001"
+        val cnonce = generateCnonce()
+
+        // Calculate HA1 = MD5(username:realm:password)
+        val ha1 = md5Hex("$username:${challenge.realm}:$password")
+
+        // Calculate HA2 = MD5(method:uri)
+        val ha2 = md5Hex("$method:$uri")
+
+        // Calculate response based on qop
+        val response = if (challenge.qop != null) {
+            // qop specified: response = MD5(HA1:nonce:nc:cnonce:qop:HA2)
+            md5Hex("$ha1:${challenge.nonce}:$nc:$cnonce:${challenge.qop}:$ha2")
+        } else {
+            // No qop: response = MD5(HA1:nonce:HA2)
+            md5Hex("$ha1:${challenge.nonce}:$ha2")
+        }
+
+        // Build Authorization header
+        val sb = StringBuilder("Digest ")
+        sb.append("""username="$username", """)
+        sb.append("""realm="${challenge.realm}", """)
+        sb.append("""nonce="${challenge.nonce}", """)
+        sb.append("""uri="$uri", """)
+
+        if (challenge.qop != null) {
+            sb.append("""qop=${challenge.qop}, """)
+            sb.append("""nc=$nc, """)
+            sb.append("""cnonce="$cnonce", """)
+        }
+
+        sb.append("""response="$response"""")
+
+        challenge.opaque?.let {
+            sb.append(""", opaque="$it"""")
+        }
+
+        return sb.toString()
+    }
+
+    /**
+     * Generates a client nonce for Digest auth.
+     */
+    private fun generateCnonce(): String {
+        val bytes = ByteArray(16)
+        java.security.SecureRandom().nextBytes(bytes)
+        return bytes.joinToString("") { "%02x".format(it) }
+    }
+
+    /**
+     * Calculates MD5 hash and returns as hex string.
+     */
+    private fun md5Hex(input: String): String {
+        val md = MessageDigest.getInstance("MD5")
+        val digest = md.digest(input.toByteArray())
+        return digest.joinToString("") { "%02x".format(it) }
     }
 
     /**
@@ -171,6 +302,17 @@ class EcpClient {
             ""
         }
     }
+
+    /**
+     * Digest authentication challenge parameters.
+     */
+    private data class DigestChallenge(
+        val realm: String,
+        val nonce: String,
+        val qop: String?,
+        val opaque: String?,
+        val algorithm: String
+    )
 
     /**
      * Result of an authentication test.

@@ -25,7 +25,7 @@ class RokuDeviceExecutionTarget(
 
     override fun getIcon(): Icon {
         return when (device.currentConnectionState) {
-            RokuDeviceConnectionState.CONNECTED -> RokuIcons.ROKU_CONNECTED
+            RokuDeviceConnectionState.AVAILABLE -> RokuIcons.ROKU_CONNECTED
             RokuDeviceConnectionState.AUTH_REQUIRED,
             RokuDeviceConnectionState.AUTH_FAILED -> RokuIcons.ROKU_AUTH_REQUIRED
             else -> RokuIcons.ROKU_DISCONNECTED

@@ -51,29 +51,34 @@ data class RokuDevice(
             else ipAddress
         }
 
-    /** Whether this device is currently connected */
-    val isConnected: Boolean
-        get() = _connectionState.value == RokuDeviceConnectionState.CONNECTED
+    /** Whether this device is currently available */
+    val isAvailable: Boolean
+        get() = _connectionState.value == RokuDeviceConnectionState.AVAILABLE
 
     /** Whether this device requires authentication */
     val needsAuth: Boolean
         get() = _connectionState.value == RokuDeviceConnectionState.AUTH_REQUIRED ||
                 _connectionState.value == RokuDeviceConnectionState.AUTH_FAILED
 
-    /** Whether this device has been successfully contacted or has a terminal state */
+    /** Whether this device should be shown in the device list */
     fun hasBeenContacted(): Boolean {
         // Device has info from ECP query
         if (friendlyName.isNotBlank() || modelName.isNotBlank()) return true
 
-        // Device has a terminal connection state (was contacted, even if failed)
-        return when (currentConnectionState) {
-            RokuDeviceConnectionState.CONNECTED,
-            RokuDeviceConnectionState.DISCONNECTED,
-            RokuDeviceConnectionState.AUTH_REQUIRED,
-            RokuDeviceConnectionState.AUTH_FAILED,
-            RokuDeviceConnectionState.ERROR -> true
-            else -> false
+        // Device has an IP address and is being checked or has a result
+        if (ipAddress.isNotBlank()) {
+            return when (currentConnectionState) {
+                RokuDeviceConnectionState.CHECKING,
+                RokuDeviceConnectionState.AVAILABLE,
+                RokuDeviceConnectionState.UNAVAILABLE,
+                RokuDeviceConnectionState.AUTH_REQUIRED,
+                RokuDeviceConnectionState.AUTH_FAILED,
+                RokuDeviceConnectionState.ERROR -> true
+                else -> false
+            }
         }
+
+        return false
     }
 
     override fun equals(other: Any?): Boolean {
@@ -144,16 +149,17 @@ data class RokuDeviceInfo(
 /**
  * Serializable version of RokuDevice for persistence.
  * This avoids issues with StateFlow serialization.
+ * Note: Uses var properties for IntelliJ XML serialization compatibility.
  */
 data class SavedRokuDevice(
-    val id: String = "",
-    val ipAddress: String = "",
-    val friendlyName: String = "",
-    val modelName: String = "",
-    val modelNumber: String = "",
-    val softwareVersion: String = "",
-    val serialNumber: String = "",
-    val isManuallyAdded: Boolean = false
+    var id: String = "",
+    var ipAddress: String = "",
+    var friendlyName: String = "",
+    var modelName: String = "",
+    var modelNumber: String = "",
+    var softwareVersion: String = "",
+    var serialNumber: String = "",
+    var isManuallyAdded: Boolean = false
 ) {
     fun toRokuDevice(): RokuDevice {
         return RokuDevice(

@@ -123,6 +123,8 @@ class RokuDeviceService : Disposable {
             val isNewDevice = existingDevice == null
             val needsInfoRefresh = isNewDevice || existingDevice?.friendlyName.isNullOrBlank()
 
+            // Set to CHECKING state so device shows in the list immediately
+            device.updateConnectionState(RokuDeviceConnectionState.CHECKING)
             addOrUpdateDevice(device)
 
             // Fetch device info for new devices or devices without info
@@ -152,7 +154,7 @@ class RokuDeviceService : Disposable {
         }
 
         val device = RokuDevice.createManual(ipAddress)
-        device.updateConnectionState(RokuDeviceConnectionState.CONNECTING)
+        device.updateConnectionState(RokuDeviceConnectionState.CHECKING)
         addOrUpdateDevice(device)
 
         // Fetch device info asynchronously
@@ -179,12 +181,18 @@ class RokuDeviceService : Disposable {
                 if (device.softwareVersion.isNotBlank()) softwareVersion = device.softwareVersion
                 if (device.serialNumber.isNotBlank()) serialNumber = device.serialNumber
                 lastSeen = System.currentTimeMillis()
+                // Also update connection state if the incoming device has a more specific state
+                if (device.currentConnectionState != RokuDeviceConnectionState.UNKNOWN) {
+                    updateConnectionState(device.currentConnectionState)
+                }
             }
         } else {
             currentDevices[device.id] = device
         }
 
-        _devices.value = currentDevices
+        // Force StateFlow to emit by creating a new map instance
+        // (StateFlow uses structural equality, so we need a new map to trigger collectors)
+        _devices.value = currentDevices.toMap()
         persistDevices()
     }
 
@@ -264,17 +272,17 @@ class RokuDeviceService : Disposable {
      * @param device The device to refresh
      */
     suspend fun refreshDeviceInfo(device: RokuDevice) {
-        device.updateConnectionState(RokuDeviceConnectionState.CONNECTING)
+        device.updateConnectionState(RokuDeviceConnectionState.CHECKING)
 
         try {
             val info = ecpClient.getDeviceInfo(device.ipAddress)
             info.applyTo(device)
-            device.updateConnectionState(RokuDeviceConnectionState.CONNECTED)
+            device.updateConnectionState(RokuDeviceConnectionState.AVAILABLE)
             addOrUpdateDevice(device)
             LOG.info("Refreshed device info for ${device.displayName}")
         } catch (e: Exception) {
             LOG.warn("Failed to refresh device info for ${device.ipAddress}", e)
-            device.updateConnectionState(RokuDeviceConnectionState.DISCONNECTED)
+            device.updateConnectionState(RokuDeviceConnectionState.UNAVAILABLE)
         }
     }
 

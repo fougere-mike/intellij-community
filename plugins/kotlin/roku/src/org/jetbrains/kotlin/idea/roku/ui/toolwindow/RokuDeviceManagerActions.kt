@@ -110,7 +110,7 @@ class RokuTestAuthAction : AnAction(
             withContext(Dispatchers.EDT) {
                 when (result) {
                     is AuthenticationResult.Success -> {
-                        selectedDevice.updateConnectionState(RokuDeviceConnectionState.CONNECTED)
+                        selectedDevice.updateConnectionState(RokuDeviceConnectionState.AVAILABLE)
                         Messages.showInfoMessage(
                             project,
                             RokuBundle.message("auth.success.message", selectedDevice.displayName),

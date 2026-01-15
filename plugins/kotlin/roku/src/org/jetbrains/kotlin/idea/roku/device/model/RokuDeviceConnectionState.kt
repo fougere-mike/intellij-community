@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.roku.device.model
 
 /**
- * Represents the connection state of a Roku device.
+ * Represents the availability state of a Roku device.
  */
 enum class RokuDeviceConnectionState {
     /** Initial state, device hasn't been checked yet */
@@ -11,14 +11,14 @@ enum class RokuDeviceConnectionState {
     /** SSDP discovery in progress for this device */
     DISCOVERING,
 
-    /** Attempting to connect to the device */
-    CONNECTING,
+    /** Checking device availability */
+    CHECKING,
 
-    /** Successfully connected and (if required) authenticated */
-    CONNECTED,
+    /** Device is reachable and (if required) authenticated */
+    AVAILABLE,
 
-    /** Device was connected but is now unreachable */
-    DISCONNECTED,
+    /** Device is not reachable */
+    UNAVAILABLE,
 
     /** Device is reachable but requires authentication */
     AUTH_REQUIRED,
@@ -26,6 +26,6 @@ enum class RokuDeviceConnectionState {
     /** Authentication was attempted but failed */
     AUTH_FAILED,
 
-    /** Connection error occurred */
+    /** Error occurred while checking device */
     ERROR
 }

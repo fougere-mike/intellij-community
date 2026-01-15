@@ -25,10 +25,10 @@ class RokuDeviceListCellRenderer : ColoredListCellRenderer<RokuDevice>() {
     ) {
         // Set icon based on connection state
         icon = when (value.currentConnectionState) {
-            RokuDeviceConnectionState.CONNECTED -> RokuIcons.ROKU_CONNECTED
+            RokuDeviceConnectionState.AVAILABLE -> RokuIcons.ROKU_CONNECTED
             RokuDeviceConnectionState.AUTH_REQUIRED,
             RokuDeviceConnectionState.AUTH_FAILED -> RokuIcons.ROKU_AUTH_REQUIRED
-            RokuDeviceConnectionState.DISCONNECTED,
+            RokuDeviceConnectionState.UNAVAILABLE,
             RokuDeviceConnectionState.ERROR -> RokuIcons.ROKU_DISCONNECTED
             else -> RokuIcons.ROKU
         }
@@ -51,12 +51,12 @@ class RokuDeviceListCellRenderer : ColoredListCellRenderer<RokuDevice>() {
                 RokuBundle.message("device.state.unknown") to SimpleTextAttributes.GRAYED_ATTRIBUTES
             RokuDeviceConnectionState.DISCOVERING ->
                 RokuBundle.message("device.state.discovering") to SimpleTextAttributes.GRAYED_ATTRIBUTES
-            RokuDeviceConnectionState.CONNECTING ->
-                RokuBundle.message("device.state.connecting") to SimpleTextAttributes.GRAYED_ATTRIBUTES
-            RokuDeviceConnectionState.CONNECTED ->
-                RokuBundle.message("device.state.connected") to SimpleTextAttributes.REGULAR_ATTRIBUTES
-            RokuDeviceConnectionState.DISCONNECTED ->
-                RokuBundle.message("device.state.disconnected") to SimpleTextAttributes.GRAYED_ATTRIBUTES
+            RokuDeviceConnectionState.CHECKING ->
+                RokuBundle.message("device.state.checking") to SimpleTextAttributes.GRAYED_ATTRIBUTES
+            RokuDeviceConnectionState.AVAILABLE ->
+                RokuBundle.message("device.state.available") to SimpleTextAttributes.REGULAR_ATTRIBUTES
+            RokuDeviceConnectionState.UNAVAILABLE ->
+                RokuBundle.message("device.state.unavailable") to SimpleTextAttributes.GRAYED_ATTRIBUTES
             RokuDeviceConnectionState.AUTH_REQUIRED ->
                 RokuBundle.message("device.state.authRequired") to SimpleTextAttributes.ERROR_ATTRIBUTES
             RokuDeviceConnectionState.AUTH_FAILED ->
