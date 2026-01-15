@@ -60,6 +60,22 @@ data class RokuDevice(
         get() = _connectionState.value == RokuDeviceConnectionState.AUTH_REQUIRED ||
                 _connectionState.value == RokuDeviceConnectionState.AUTH_FAILED
 
+    /** Whether this device has been successfully contacted or has a terminal state */
+    fun hasBeenContacted(): Boolean {
+        // Device has info from ECP query
+        if (friendlyName.isNotBlank() || modelName.isNotBlank()) return true
+
+        // Device has a terminal connection state (was contacted, even if failed)
+        return when (currentConnectionState) {
+            RokuDeviceConnectionState.CONNECTED,
+            RokuDeviceConnectionState.DISCONNECTED,
+            RokuDeviceConnectionState.AUTH_REQUIRED,
+            RokuDeviceConnectionState.AUTH_FAILED,
+            RokuDeviceConnectionState.ERROR -> true
+            else -> false
+        }
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is RokuDevice) return false

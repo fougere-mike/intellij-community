@@ -146,7 +146,11 @@ class RokuDeviceManagerPanel(
 
     private fun updateDeviceList(devices: List<RokuDevice>) {
         val selectedDevice = deviceList.selectedValue
-        val sortedDevices = devices.sortedBy { it.displayName }
+
+        // Filter out devices that haven't been contacted yet (no info and still connecting)
+        val contactedDevices = devices.filter { it.hasBeenContacted() }
+
+        val sortedDevices = contactedDevices.sortedBy { it.displayName }
 
         deviceListModel.clear()
         sortedDevices.forEach { deviceListModel.addElement(it) }
