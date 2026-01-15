@@ -16,12 +16,16 @@ import org.jetbrains.kotlin.idea.roku.RokuBundle
 import org.jetbrains.kotlin.idea.roku.RokuIcons
 import org.jetbrains.kotlin.idea.roku.device.credentials.AuthenticationResult
 import org.jetbrains.kotlin.idea.roku.device.credentials.RokuCredentialsManager
+import org.jetbrains.kotlin.idea.roku.device.credentials.TestAuthResult
 import org.jetbrains.kotlin.idea.roku.device.model.RokuDevice
 import org.jetbrains.kotlin.idea.roku.device.model.RokuDeviceConnectionState
 import org.jetbrains.kotlin.idea.roku.device.service.RokuDeviceService
 import org.jetbrains.kotlin.idea.roku.ui.dialogs.AddDeviceDialog
+import org.jetbrains.kotlin.idea.roku.ui.dialogs.EditDeviceDialog
 import org.jetbrains.kotlin.idea.roku.ui.dialogs.PasswordDialog
 import java.awt.BorderLayout
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.*
 
 /**
@@ -58,6 +62,28 @@ class RokuDeviceManagerPanel(
                 deviceService.selectDevice(selected)
             }
         }
+
+        // Add right-click context menu
+        deviceList.addMouseListener(object : MouseAdapter() {
+            override fun mousePressed(e: MouseEvent) {
+                handlePopupTrigger(e)
+            }
+
+            override fun mouseReleased(e: MouseEvent) {
+                handlePopupTrigger(e)
+            }
+
+            private fun handlePopupTrigger(e: MouseEvent) {
+                if (e.isPopupTrigger) {
+                    // Select the item under the cursor
+                    val index = deviceList.locationToIndex(e.point)
+                    if (index >= 0) {
+                        deviceList.selectedIndex = index
+                        showContextMenu(e)
+                    }
+                }
+            }
+        })
 
         // Subscribe to device list updates
         scope.launch {
@@ -101,6 +127,21 @@ class RokuDeviceManagerPanel(
         )
         toolbar.targetComponent = this
         return toolbar.component
+    }
+
+    private fun showContextMenu(e: MouseEvent) {
+        val actionGroup = DefaultActionGroup().apply {
+            add(EditDeviceAction())
+            add(TestAuthAction())
+            addSeparator()
+            add(RemoveDeviceAction())
+        }
+
+        val popupMenu = ActionManager.getInstance().createActionPopupMenu(
+            "RokuDeviceManagerContextMenu",
+            actionGroup
+        )
+        popupMenu.component.show(deviceList, e.x, e.y)
     }
 
     private fun updateDeviceList(devices: List<RokuDevice>) {
@@ -155,6 +196,68 @@ class RokuDeviceManagerPanel(
         override fun actionPerformed(e: AnActionEvent) {
             val selectedDevice = deviceList.selectedValue ?: return
             deviceService.removeDevice(selectedDevice.id)
+        }
+
+        override fun update(e: AnActionEvent) {
+            e.presentation.isEnabled = deviceList.selectedValue != null
+        }
+
+        override fun getActionUpdateThread() = ActionUpdateThread.EDT
+    }
+
+    private inner class EditDeviceAction : AnAction(
+        RokuBundle.message("action.edit"),
+        RokuBundle.message("action.edit.description"),
+        AllIcons.Actions.Edit
+    ) {
+        override fun actionPerformed(e: AnActionEvent) {
+            val selectedDevice = deviceList.selectedValue ?: return
+
+            val dialog = EditDeviceDialog(project, selectedDevice)
+            if (dialog.showAndGet()) {
+                // Update device friendly name
+                val newName = dialog.friendlyName
+                if (newName != selectedDevice.friendlyName) {
+                    selectedDevice.friendlyName = newName
+                    deviceService.updateDevice(selectedDevice)
+                }
+
+                // Update password if changed
+                if (dialog.shouldChangePassword) {
+                    val newPassword = dialog.newPassword
+                    scope.launch {
+                        val result = credentialsManager.testAndSaveCredentials(selectedDevice, newPassword)
+                        withContext(Dispatchers.EDT) {
+                            when (result) {
+                                is TestAuthResult.Success -> {
+                                    selectedDevice.updateConnectionState(RokuDeviceConnectionState.CONNECTED)
+                                    Messages.showInfoMessage(
+                                        project,
+                                        RokuBundle.message("auth.success.message", selectedDevice.displayName),
+                                        RokuBundle.message("auth.success.title")
+                                    )
+                                }
+                                is TestAuthResult.InvalidCredentials -> {
+                                    selectedDevice.updateConnectionState(RokuDeviceConnectionState.AUTH_FAILED)
+                                    Messages.showErrorDialog(
+                                        project,
+                                        RokuBundle.message("auth.invalid.message"),
+                                        RokuBundle.message("auth.invalid.title")
+                                    )
+                                }
+                                is TestAuthResult.Error -> {
+                                    selectedDevice.updateConnectionState(RokuDeviceConnectionState.ERROR)
+                                    Messages.showErrorDialog(
+                                        project,
+                                        RokuBundle.message("auth.error.message", result.message),
+                                        RokuBundle.message("auth.error.title")
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         override fun update(e: AnActionEvent) {

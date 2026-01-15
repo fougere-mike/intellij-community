@@ -104,7 +104,7 @@ class RokuGradleBuildBeforeRunTaskProvider(
         }
 
         // Build Gradle task settings
-        val gradleTask = configuration.gradleTask ?: "installRokuApp"
+        val gradleTask = configuration.gradleTask ?: "installRoku"
         val projectPath = project.basePath ?: return false
 
         val settings = ExternalSystemTaskExecutionSettings()

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.roku.run
 import com.intellij.execution.Executor
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.roku.device.service.RokuDeviceService
@@ -17,6 +18,8 @@ class RokuRunConfiguration(
     factory: ConfigurationFactory,
     name: String
 ) : RunConfigurationBase<RokuRunConfigurationOptions>(project, factory, name) {
+
+    private val LOG = Logger.getInstance(RokuRunConfiguration::class.java)
 
     override fun getOptions(): RokuRunConfigurationOptions {
         return super.getOptions() as RokuRunConfigurationOptions
@@ -74,18 +77,28 @@ class RokuRunConfiguration(
      * otherwise falls back to explicit device IP or selected device.
      */
     fun getTargetDevice(environment: ExecutionEnvironment): org.jetbrains.kotlin.idea.roku.device.model.RokuDevice? {
-        // First try to get from execution target
+        val deviceService = RokuDeviceService.getInstance()
+
+        // First try to get from execution target (toolbar dropdown)
         val target = environment.executionTarget
+        LOG.info("Execution target: ${target.javaClass.simpleName}, id=${target.id}")
         if (target is RokuDeviceExecutionTarget) {
+            LOG.info("Using device from execution target: ${target.device.displayName}")
             return target.device
         }
 
         // Fall back to explicit device or selected device
-        return if (useSelectedDevice) {
-            RokuDeviceService.getInstance().selectedDevice.value
+        val device = if (useSelectedDevice) {
+            // Try the selected device first
+            deviceService.selectedDevice.value
+                // If no device is explicitly selected, use the first available device
+                ?: deviceService.getDeviceList().firstOrNull()
         } else {
-            deviceIp?.let { RokuDeviceService.getInstance().getDeviceByIp(it) }
+            deviceIp?.let { deviceService.getDeviceByIp(it) }
         }
+
+        LOG.info("Fallback device resolution: useSelectedDevice=$useSelectedDevice, deviceIp=$deviceIp, resolved=${device?.displayName}")
+        return device
     }
 
 }

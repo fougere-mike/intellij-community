@@ -15,9 +15,12 @@ import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.kotlin.idea.roku.RokuBundle
+import org.jetbrains.kotlin.idea.roku.connection.RokuConnectionManager
+import org.jetbrains.kotlin.idea.roku.connection.RokuConnectionState
 import org.jetbrains.kotlin.idea.roku.device.model.RokuDevice
 import org.jetbrains.kotlin.idea.roku.device.service.RokuDeviceService
 import org.jetbrains.kotlin.idea.roku.log.service.RokuLogService
+import java.awt.Color
 import java.awt.BorderLayout
 import java.awt.FlowLayout
 import javax.swing.*
@@ -41,10 +44,12 @@ class RokuLogHeaderPanel(
     private val deviceService = RokuDeviceService.getInstance()
 
     private val deviceComboBox = JComboBox<RokuDevice?>()
+    private val connectionStatusLabel = JLabel()
     private val filterTextField = SearchTextField(true)
     private val rootPanel: JPanel
 
     private var autoScrollController: AutoScrollController? = null
+    private var connectionStateJob: Job? = null
 
     /** The root component */
     val component: JComponent
@@ -58,6 +63,7 @@ class RokuLogHeaderPanel(
 
         // Create toolbar with actions
         val actionGroup = DefaultActionGroup().apply {
+            add(ReconnectAction())
             add(ClearAction())
             add(AutoScrollAction())
         }
@@ -72,6 +78,7 @@ class RokuLogHeaderPanel(
         val leftPanel = JPanel(FlowLayout(FlowLayout.LEFT, 4, 0)).apply {
             add(JLabel("Device:"))
             add(deviceComboBox)
+            add(connectionStatusLabel)
         }
 
         val centerPanel = JPanel(BorderLayout()).apply {
@@ -106,6 +113,91 @@ class RokuLogHeaderPanel(
                         deviceComboBox.selectedItem = device
                     }
                 }
+                // Subscribe to connection state for the selected device
+                subscribeToConnectionState(device)
+            }
+        }
+    }
+
+    /**
+     * Subscribes to connection state changes for the selected device.
+     */
+    private fun subscribeToConnectionState(device: RokuDevice?) {
+        // Cancel previous subscription
+        connectionStateJob?.cancel()
+
+        if (device == null) {
+            scope.launch {
+                withContext(Dispatchers.EDT) {
+                    connectionStatusLabel.text = ""
+                }
+            }
+            return
+        }
+
+        connectionStateJob = scope.launch {
+            val connectionManager = RokuConnectionManager.getInstance()
+
+            // Show "Connecting..." immediately while connection is being established
+            withContext(Dispatchers.EDT) {
+                updateConnectionStatus(RokuConnectionState.CONNECTING, device)
+            }
+
+            // Poll for connection state with shorter interval for faster feedback
+            var attempts = 0
+            val maxAttempts = 50  // 5 seconds max wait (50 * 100ms)
+            while (isActive && attempts < maxAttempts) {
+                val stateFlow = connectionManager.getConnectionState(device)
+
+                if (stateFlow != null) {
+                    // We have a connection, subscribe to its state
+                    stateFlow.collectLatest { state ->
+                        withContext(Dispatchers.EDT) {
+                            updateConnectionStatus(state, device)
+                        }
+                    }
+                    // collectLatest only returns when cancelled, so if we get here the flow ended
+                    break
+                } else {
+                    // No connection yet, wait and retry
+                    delay(100)
+                    attempts++
+                }
+            }
+
+            // If we timed out waiting for connection, show disconnected
+            if (attempts >= maxAttempts) {
+                withContext(Dispatchers.EDT) {
+                    updateConnectionStatus(RokuConnectionState.DISCONNECTED, device)
+                }
+            }
+        }
+    }
+
+    /**
+     * Updates the connection status label based on the current state.
+     */
+    private fun updateConnectionStatus(state: RokuConnectionState, device: RokuDevice) {
+        when (state) {
+            RokuConnectionState.CONNECTING -> {
+                connectionStatusLabel.text = RokuBundle.message("log.status.connecting")
+                connectionStatusLabel.foreground = Color.ORANGE
+            }
+            RokuConnectionState.CONNECTED -> {
+                connectionStatusLabel.text = RokuBundle.message("log.status.connected")
+                connectionStatusLabel.foreground = Color.GREEN.darker()
+            }
+            RokuConnectionState.DISCONNECTED -> {
+                connectionStatusLabel.text = RokuBundle.message("log.status.disconnected")
+                connectionStatusLabel.foreground = Color.GRAY
+            }
+            RokuConnectionState.CONNECTION_FAILED -> {
+                connectionStatusLabel.text = RokuBundle.message("log.status.failed")
+                connectionStatusLabel.foreground = Color.RED
+            }
+            RokuConnectionState.RECONNECTING -> {
+                connectionStatusLabel.text = RokuBundle.message("log.status.reconnecting")
+                connectionStatusLabel.foreground = Color.ORANGE
             }
         }
     }
@@ -165,6 +257,32 @@ class RokuLogHeaderPanel(
             val matchingDevice = devices.find { it.id == currentSelection.id }
             deviceComboBox.selectedItem = matchingDevice
         }
+    }
+
+    private inner class ReconnectAction : AnAction(
+        RokuBundle.message("action.reconnect"),
+        RokuBundle.message("action.reconnect.description"),
+        AllIcons.Actions.Refresh
+    ), DumbAware {
+        override fun actionPerformed(e: AnActionEvent) {
+            val device = logService.selectedDevice.value ?: return
+            RokuConnectionManager.getInstance().forceDisconnect(device)
+            logService.selectDevice(device)  // Re-triggers connection
+        }
+
+        override fun update(e: AnActionEvent) {
+            val device = logService.selectedDevice.value
+            val state = device?.let {
+                RokuConnectionManager.getInstance().getConnectionState(it)?.value
+            }
+            // Enable when connection failed or disconnected
+            e.presentation.isEnabled = device != null && (
+                state == RokuConnectionState.CONNECTION_FAILED ||
+                state == RokuConnectionState.DISCONNECTED
+            )
+        }
+
+        override fun getActionUpdateThread() = ActionUpdateThread.EDT
     }
 
     private inner class ClearAction : AnAction(

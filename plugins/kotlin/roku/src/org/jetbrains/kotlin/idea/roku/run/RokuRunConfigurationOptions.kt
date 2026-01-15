@@ -27,9 +27,9 @@ class RokuRunConfigurationOptions : RunConfigurationOptions() {
         get() = deviceIpProperty.getValue(this)
         set(value) = deviceIpProperty.setValue(this, value)
 
-    /** Gradle task to run for building (default: installRokuApp) */
+    /** Gradle task to run for building (default: installRoku) */
     private val gradleTaskProperty: StoredProperty<String?> =
-        string("installRokuApp").provideDelegate(this, "gradleTask")
+        string("installRoku").provideDelegate(this, "gradleTask")
 
     var gradleTask: String?
         get() = gradleTaskProperty.getValue(this)

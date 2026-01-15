@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.roku.run
 
+import com.intellij.execution.BeforeRunTask
+import com.intellij.execution.BeforeRunTaskProvider
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RunConfiguration
@@ -22,7 +24,19 @@ class RokuRunConfigurationType : SimpleConfigurationType(
     NotNullLazyValue.createValue { RokuIcons.ROKU }
 ) {
     override fun createTemplateConfiguration(project: Project): RunConfiguration {
-        return RokuRunConfiguration(project, this, "Roku Application")
+        val config = RokuRunConfiguration(project, this, "Roku Application")
+
+        // Add the Gradle build before-run task automatically
+        val beforeRunProvider = BeforeRunTaskProvider.getProvider(project, RokuGradleBuildBeforeRunTaskProvider.ID)
+        if (beforeRunProvider != null) {
+            val task = beforeRunProvider.createTask(config)
+            if (task != null) {
+                task.isEnabled = true
+                config.beforeRunTasks = listOf(task)
+            }
+        }
+
+        return config
     }
 
     override fun isDumbAware(): Boolean = true

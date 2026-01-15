@@ -81,7 +81,8 @@ class EcpClient {
     /**
      * Tests authentication credentials against a Roku device.
      *
-     * Roku developer mode uses HTTP Basic Auth on the installer endpoint.
+     * Roku developer mode uses HTTP Basic Auth on the developer web interface
+     * which runs on port 80 (not the ECP port 8060).
      *
      * @param ipAddress The IP address of the Roku device
      * @param username The username (typically "rokudev")
@@ -94,8 +95,8 @@ class EcpClient {
         password: String
     ): AuthResult = withContext(Dispatchers.IO) {
         try {
-            // Roku developer mode uses basic auth on the installer endpoint
-            val url = URL("http://$ipAddress:$ECP_PORT/plugin_install")
+            // Roku developer installer web interface runs on port 80, not ECP port 8060
+            val url = URL("http://$ipAddress:80/")
             val connection = url.openConnection() as HttpURLConnection
 
             try {
@@ -109,8 +110,7 @@ class EcpClient {
                 connection.setRequestProperty("Authorization", "Basic $encodedCredentials")
 
                 when (connection.responseCode) {
-                    HttpURLConnection.HTTP_OK,
-                    HttpURLConnection.HTTP_NO_CONTENT -> {
+                    HttpURLConnection.HTTP_OK -> {
                         LOG.info("Authentication successful for $ipAddress")
                         AuthResult.Success
                     }
@@ -126,6 +126,9 @@ class EcpClient {
             } finally {
                 connection.disconnect()
             }
+        } catch (e: java.net.ConnectException) {
+            LOG.warn("Developer mode may not be enabled on $ipAddress: ${e.message}")
+            AuthResult.Error("Connection refused - is developer mode enabled?")
         } catch (e: Exception) {
             LOG.warn("Authentication test failed for $ipAddress", e)
             AuthResult.Error(e.message ?: "Unknown error")

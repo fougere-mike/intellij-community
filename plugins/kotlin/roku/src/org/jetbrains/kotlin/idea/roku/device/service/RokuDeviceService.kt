@@ -119,7 +119,19 @@ class RokuDeviceService : Disposable {
         val discoveredDevices = ssdpDiscovery.discover(settings.ssdpDiscoveryTimeoutMs.toInt())
 
         discoveredDevices.forEach { device ->
+            val existingDevice = _devices.value[device.id]
+            val isNewDevice = existingDevice == null
+            val needsInfoRefresh = isNewDevice || existingDevice?.friendlyName.isNullOrBlank()
+
             addOrUpdateDevice(device)
+
+            // Fetch device info for new devices or devices without info
+            if (needsInfoRefresh) {
+                val deviceToRefresh = _devices.value[device.id] ?: device
+                scope.launch {
+                    refreshDeviceInfo(deviceToRefresh)
+                }
+            }
         }
 
         LOG.info("Discovery complete. Found ${discoveredDevices.size} device(s)")
@@ -174,6 +186,16 @@ class RokuDeviceService : Disposable {
 
         _devices.value = currentDevices
         persistDevices()
+    }
+
+    /**
+     * Updates a device's information and persists the changes.
+     *
+     * @param device The device to update
+     */
+    fun updateDevice(device: RokuDevice) {
+        addOrUpdateDevice(device)
+        LOG.info("Updated device: ${device.displayName}")
     }
 
     /**

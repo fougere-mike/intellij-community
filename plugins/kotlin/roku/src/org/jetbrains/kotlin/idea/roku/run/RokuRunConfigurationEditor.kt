@@ -47,7 +47,7 @@ class RokuRunConfigurationEditor(
         useSelectedDeviceCheckbox.isSelected = config.useSelectedDevice
         deviceIpField.text = config.deviceIp ?: ""
         deviceIpField.isEnabled = !config.useSelectedDevice
-        gradleTaskField.text = config.gradleTask ?: "installRokuApp"
+        gradleTaskField.text = config.gradleTask ?: "installRoku"
         packageFirstCheckbox.isSelected = config.packageFirst
         moduleNameField.text = config.moduleName ?: ""
     }

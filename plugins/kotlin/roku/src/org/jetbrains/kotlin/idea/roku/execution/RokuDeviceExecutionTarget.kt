@@ -38,9 +38,8 @@ class RokuDeviceExecutionTarget(
     }
 
     override fun isReady(): Boolean {
-        // Consider ready if connected (authentication may still be needed)
-        return device.currentConnectionState == RokuDeviceConnectionState.CONNECTED ||
-               device.currentConnectionState == RokuDeviceConnectionState.UNKNOWN
+        // Always ready - authentication happens during run, not before
+        return true
     }
 
     override fun equals(other: Any?): Boolean {
