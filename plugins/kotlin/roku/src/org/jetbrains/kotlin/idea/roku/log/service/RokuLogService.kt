@@ -92,6 +92,13 @@ class RokuLogService(
 
             LOG.info("Starting log collection for ${device.displayName}")
 
+            // Connect AFTER acquiring and BEFORE collecting - ensures we're ready
+            // to receive logs when they start arriving. This avoids a race condition
+            // where logs could be emitted before the collector is subscribed.
+            if (connection.state.value == RokuConnectionState.DISCONNECTED) {
+                connection.connect()
+            }
+
             connection.logs.collect { rawLine ->
                 val entry = LogParser.parse(rawLine)
                 val bufferedEntry = logBuffer.add(entry)

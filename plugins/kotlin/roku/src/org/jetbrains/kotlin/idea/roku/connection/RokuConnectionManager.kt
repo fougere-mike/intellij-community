@@ -66,10 +66,9 @@ class RokuConnectionManager : Disposable {
             }
         }!!
 
-        // Start connection if not already connected
-        if (holder.connection.state.value == RokuConnectionState.DISCONNECTED) {
-            holder.connection.connect()
-        }
+        // Note: Connection is NOT started here - callers must call connect() after
+        // subscribing to the logs flow to avoid race conditions where logs are
+        // emitted before the subscriber is ready.
 
         return holder.connection
     }

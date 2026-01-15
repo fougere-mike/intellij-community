@@ -30,7 +30,7 @@ class RokuTelnetConnection(
     /** Observable connection state */
     val state: StateFlow<RokuConnectionState> = _state.asStateFlow()
 
-    private val _logs = MutableSharedFlow<String>(replay = 0, extraBufferCapacity = 1000)
+    private val _logs = MutableSharedFlow<String>(replay = 100, extraBufferCapacity = 1000)
     /** Stream of log lines from the device */
     val logs: SharedFlow<String> = _logs.asSharedFlow()
 
@@ -75,11 +75,50 @@ class RokuTelnetConnection(
 
         try {
             withContext(Dispatchers.IO) {
-                socket = Socket().apply {
-                    soTimeout = 0 // No read timeout - we want to block indefinitely
-                    keepAlive = true
-                    connect(java.net.InetSocketAddress(ipAddress, port), connectionTimeoutMs)
+                // Debug: Log network environment
+                LOG.info("DEBUG: Thread = ${Thread.currentThread().name}")
+                LOG.info("DEBUG: Coroutine context = ${currentCoroutineContext()}")
+
+                // Debug: Check IP address resolution
+                val inetAddress = java.net.InetAddress.getByName(ipAddress)
+                LOG.info("DEBUG: Resolved address = $inetAddress")
+                LOG.info("DEBUG: Address class = ${inetAddress.javaClass.name}")
+                LOG.info("DEBUG: Host address = ${inetAddress.hostAddress}")
+
+                // Debug: Log network interfaces
+                java.net.NetworkInterface.getNetworkInterfaces()?.toList()?.forEach { ni ->
+                    LOG.info("DEBUG: Network interface: ${ni.name} - ${ni.inetAddresses.toList()}")
                 }
+
+                // Debug: Check socket factory
+                val socketFactory = javax.net.SocketFactory.getDefault()
+                LOG.info("DEBUG: Socket factory = ${socketFactory.javaClass.name}")
+
+                // Debug: Check system properties
+                LOG.info("DEBUG: socksProxyHost = ${System.getProperty("socksProxyHost")}")
+                LOG.info("DEBUG: socksProxyPort = ${System.getProperty("socksProxyPort")}")
+                LOG.info("DEBUG: http.proxyHost = ${System.getProperty("http.proxyHost")}")
+                LOG.info("DEBUG: java.net.preferIPv4Stack = ${System.getProperty("java.net.preferIPv4Stack")}")
+
+                // Debug: Create socket with detailed error handling
+                LOG.info("DEBUG: Creating Socket()...")
+                val newSocket = Socket()
+                LOG.info("DEBUG: Socket created, local address before connect = ${newSocket.localAddress}")
+
+                LOG.info("DEBUG: Creating InetSocketAddress...")
+                val socketAddress = java.net.InetSocketAddress(inetAddress, port)
+                LOG.info("DEBUG: InetSocketAddress = $socketAddress, isUnresolved = ${socketAddress.isUnresolved}")
+
+                LOG.info("DEBUG: Calling connect() with timeout ${connectionTimeoutMs}ms...")
+                newSocket.connect(socketAddress, connectionTimeoutMs)
+                LOG.info("DEBUG: connect() succeeded!")
+
+                LOG.info("DEBUG: Setting soTimeout...")
+                newSocket.soTimeout = 0
+                LOG.info("DEBUG: Setting keepAlive...")
+                newSocket.keepAlive = true
+
+                socket = newSocket
             }
 
             _state.value = RokuConnectionState.CONNECTED
@@ -92,6 +131,9 @@ class RokuTelnetConnection(
             if (isDisposed.get()) return
 
             LOG.warn("Connection failed to $ipAddress:$port", e)
+            LOG.warn("DEBUG: Exception class = ${e.javaClass.name}")
+            LOG.warn("DEBUG: Exception message = ${e.message}")
+            LOG.warn("DEBUG: Exception cause = ${e.cause}")
             _state.value = RokuConnectionState.CONNECTION_FAILED
 
             scheduleReconnect()
