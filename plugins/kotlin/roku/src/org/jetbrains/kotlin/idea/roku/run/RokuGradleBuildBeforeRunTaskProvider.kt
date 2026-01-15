@@ -112,7 +112,7 @@ class RokuGradleBuildBeforeRunTaskProvider(
         settings.externalProjectPath = projectPath
         settings.taskNames = buildList {
             if (configuration.packageFirst) {
-                add("packageRokuApp")
+                add("packageRoku")
             }
             add(gradleTask)
         }
