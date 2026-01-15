@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.roku.log
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.ScrollType
@@ -13,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.kotlin.idea.roku.log.model.LogEntry
 import org.jetbrains.kotlin.idea.roku.log.model.LogLevel
@@ -35,6 +37,7 @@ class RokuLogEditorPanel(
     parentDisposable: Disposable
 ) : Disposable, AutoScrollController {
 
+    private val LOG = Logger.getInstance(RokuLogEditorPanel::class.java)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val logService = RokuLogService.getInstance(project)
 
@@ -90,7 +93,11 @@ class RokuLogEditorPanel(
 
         // Subscribe to new log entries
         scope.launch {
-            logService.newLogEntry.collectLatest { entry ->
+            LOG.info("RokuLogEditorPanel: Starting newLogEntry subscription")
+            var entryCount = 0
+            logService.newLogEntry.collect { entry ->
+                entryCount++
+                LOG.info("RokuLogEditorPanel: Received entry #$entryCount (buffer size: ${logService.getBufferSize()})")
                 appendLogEntry(entry)
             }
         }
@@ -160,6 +167,7 @@ class RokuLogEditorPanel(
 
             if (entry.level.priority >= minLevel.priority &&
                 (filter.isEmpty() || matchesFilter(entry, filter))) {
+                LOG.info("RokuLogEditorPanel: appendLogEntry() on EDT, inserting at position ${document.textLength}, entry: ${entry.rawLine.take(40)}...")
                 document.insertString(document.textLength, text)
 
                 if (_autoScrollEnabled.get()) {
@@ -194,19 +202,24 @@ class RokuLogEditorPanel(
     }
 
     private fun clearDocument() {
+        LOG.info("RokuLogEditorPanel: clearDocument() called")
         ApplicationManager.getApplication().invokeLater {
+            LOG.info("RokuLogEditorPanel: clearDocument() executing on EDT, current length=${document.textLength}")
             document.setText("")
             userScrolledBack.set(false)
         }
     }
 
     private fun reloadFilteredLogs() {
+        LOG.info("RokuLogEditorPanel: reloadFilteredLogs() called")
         ApplicationManager.getApplication().invokeLater {
+            val filteredLogs = logService.getFilteredLogs()
+            LOG.info("RokuLogEditorPanel: reloadFilteredLogs() on EDT, ${filteredLogs.size} logs, current docLength=${document.textLength}")
             document.setText("")
 
-            val filteredLogs = logService.getFilteredLogs()
             val text = filteredLogs.joinToString("") { formatLogEntry(it) }
             document.setText(text)
+            LOG.info("RokuLogEditorPanel: reloadFilteredLogs() done, new docLength=${document.textLength}")
 
             if (_autoScrollEnabled.get()) {
                 scrollToEnd()

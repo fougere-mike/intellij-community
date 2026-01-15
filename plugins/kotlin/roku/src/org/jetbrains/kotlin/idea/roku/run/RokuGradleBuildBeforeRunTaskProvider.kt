@@ -10,7 +10,9 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.DumbAware
@@ -23,6 +25,7 @@ import org.jetbrains.kotlin.idea.roku.RokuBundle
 import org.jetbrains.kotlin.idea.roku.RokuIcons
 import org.jetbrains.kotlin.idea.roku.device.credentials.RokuCredentialsManager
 import org.jetbrains.kotlin.idea.roku.device.model.RokuDevice
+import org.jetbrains.kotlin.idea.roku.log.service.RokuLogService
 import org.jetbrains.kotlin.idea.roku.ui.dialogs.PasswordDialog
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import javax.swing.Icon
@@ -144,11 +147,28 @@ class RokuGradleBuildBeforeRunTaskProvider(
         val runner: ProgramRunner<*> = gradleEnv.runner
 
         // Execute Gradle build synchronously
-        return RunConfigurationBeforeRunProvider.doRunTask(
+        val success = RunConfigurationBeforeRunProvider.doRunTask(
             DefaultRunExecutor.getRunExecutorInstance().id,
             gradleEnv,
             runner
         )
+
+        // If Gradle build succeeded, activate the Roku Log window
+        if (success) {
+            LOG.info("Gradle build complete, activating Roku Log window")
+            ApplicationManager.getApplication().invokeLater({
+                val logService = RokuLogService.getInstance(project)
+                logService.selectDevice(device)
+
+                val toolWindowManager = ToolWindowManager.getInstance(project)
+                val toolWindow = toolWindowManager.getToolWindow("Roku Log")
+                toolWindow?.activate({
+                    LOG.info("Roku Log window activated after Gradle build")
+                }, true, true)
+            }, ModalityState.nonModal())
+        }
+
+        return success
     }
 
     /**

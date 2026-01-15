@@ -30,7 +30,7 @@ class RokuTelnetConnection(
     /** Observable connection state */
     val state: StateFlow<RokuConnectionState> = _state.asStateFlow()
 
-    private val _logs = MutableSharedFlow<String>(replay = 100, extraBufferCapacity = 1000)
+    private val _logs = MutableSharedFlow<String>(extraBufferCapacity = 1000)
     /** Stream of log lines from the device */
     val logs: SharedFlow<String> = _logs.asSharedFlow()
 
@@ -141,10 +141,12 @@ class RokuTelnetConnection(
     }
 
     private suspend fun readLogs() {
+        LOG.info("readLogs() starting for $ipAddress:$port")
         val reader = withContext(Dispatchers.IO) {
             BufferedReader(InputStreamReader(socket!!.getInputStream()))
         }
 
+        var lineCount = 0
         try {
             while (currentCoroutineContext().isActive && !isDisposed.get()) {
                 val line = withContext(Dispatchers.IO) {
@@ -153,24 +155,29 @@ class RokuTelnetConnection(
 
                 if (line == null) {
                     // Connection closed by remote
-                    LOG.info("Connection closed by remote host")
+                    LOG.info("Connection closed by remote host after $lineCount lines")
                     break
                 }
 
+                lineCount++
+                if (lineCount <= 3 || lineCount % 100 == 0) {
+                    LOG.info("readLogs: Emitting line #$lineCount to flow")
+                }
                 _logs.emit(line)
             }
         } catch (e: SocketTimeoutException) {
             // Should not happen with soTimeout=0, but handle anyway
-            LOG.debug("Socket timeout", e)
+            LOG.debug("Socket timeout after $lineCount lines", e)
         } catch (e: SocketException) {
             if (!isDisposed.get()) {
-                LOG.info("Socket exception: ${e.message}")
+                LOG.info("Socket exception after $lineCount lines: ${e.message}")
             }
         } catch (e: Exception) {
             if (!isDisposed.get()) {
-                LOG.warn("Error reading logs", e)
+                LOG.warn("Error reading logs after $lineCount lines", e)
             }
         } finally {
+            LOG.info("readLogs() ending for $ipAddress:$port, total lines: $lineCount")
             closeSocket()
             if (!isDisposed.get()) {
                 _state.value = RokuConnectionState.DISCONNECTED

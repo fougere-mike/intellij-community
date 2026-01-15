@@ -11,13 +11,8 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.execution.runners.executeState
 import com.intellij.execution.ui.RunContentDescriptor
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.ToolWindowManager
 import org.jetbrains.concurrency.resolvedPromise
-import org.jetbrains.kotlin.idea.roku.execution.RokuDeviceExecutionTarget
-import org.jetbrains.kotlin.idea.roku.log.service.RokuLogService
 
 /**
  * Program runner for Roku applications.
@@ -41,27 +36,10 @@ class RokuProgramRunner : ProgramRunner<RunnerSettings> {
     override fun execute(environment: ExecutionEnvironment) {
         val state = environment.state ?: return
         val project = environment.project
-        val configuration = environment.runProfile as? RokuRunConfiguration ?: return
-
-        // Get the target device
-        val device = configuration.getTargetDevice(environment)
-
-        if (device != null) {
-            LOG.info("Roku deployment complete for device: ${device.displayName}")
-
-            // Select device in log service before switching to log window
-            ApplicationManager.getApplication().invokeLater {
-                val logService = RokuLogService.getInstance(project)
-                logService.selectDevice(device)
-
-                // Switch to Roku Log tool window
-                activateRokuLogToolWindow(project)
-            }
-        } else {
-            LOG.warn("No target device found after Roku deployment")
-        }
 
         // Execute the profile state (shows deployment complete message)
+        // The Gradle BeforeRunTask runs during startRunProfile, and
+        // RokuRunProfileState.execute() activates the log window after completion
         ExecutionManager.getInstance(project).startRunProfile(environment) {
             resolvedPromise(doExecute(state, environment))
         }
@@ -75,23 +53,7 @@ class RokuProgramRunner : ProgramRunner<RunnerSettings> {
         return executeState(state, environment, this)
     }
 
-    /**
-     * Activates the Roku Log tool window.
-     */
-    private fun activateRokuLogToolWindow(project: Project) {
-        val toolWindowManager = ToolWindowManager.getInstance(project)
-        val toolWindow = toolWindowManager.getToolWindow(ROKU_LOG_TOOL_WINDOW_ID)
-
-        if (toolWindow != null) {
-            toolWindow.activate(null, true, true)
-            LOG.info("Activated Roku Log tool window")
-        } else {
-            LOG.warn("Roku Log tool window not found")
-        }
-    }
-
     companion object {
         const val RUNNER_ID = "RokuProgramRunner"
-        const val ROKU_LOG_TOOL_WINDOW_ID = "Roku Log"
     }
 }

@@ -61,21 +61,41 @@ class RokuLogService(
      * Selects a device for log viewing.
      *
      * Releases the previous device's connection and acquires a new one.
+     * If the same device is already selected and log collection is active,
+     * this is a no-op to avoid interrupting the log stream.
      *
      * @param device The device to select, or null to disconnect
      */
     fun selectDevice(device: RokuDevice?) {
         val previousDevice = _selectedDevice.value
 
+        // Skip if same device already selected and collection is running
+        if (device != null && previousDevice?.id == device.id && logCollectionJob?.isActive == true) {
+            LOG.info("Device ${device.displayName} already selected and collection active, skipping restart")
+            return
+        }
+
         // Release previous connection if different device
         if (previousDevice != null && previousDevice.id != device?.id) {
+            LOG.info("Switching from ${previousDevice.displayName} to ${device?.displayName ?: "none"}")
             RokuConnectionManager.getInstance().releaseConnection(previousDevice)
             stopLogCollection()
         }
 
+        // Clear log buffer when selecting a device to start fresh
+        // This ensures we don't show stale logs from previous sessions
+        if (device != null) {
+            LOG.info("Clearing log buffer for fresh connection to ${device.displayName}")
+            logBuffer.clear()
+            // Notify UI to clear display
+            scope.launch {
+                _clearedEvent.emit(Unit)
+            }
+        }
+
         _selectedDevice.value = device
 
-        if (device != null) {
+        if (device != null && logCollectionJob?.isActive != true) {
             startLogCollection(device)
         }
     }
@@ -90,19 +110,36 @@ class RokuLogService(
             val connectionManager = RokuConnectionManager.getInstance()
             val connection = connectionManager.acquireConnection(device)
 
-            LOG.info("Starting log collection for ${device.displayName}")
+            LOG.info("Starting log collection for ${device.displayName}, connectionState=${connection.state.value}")
 
-            // Connect AFTER acquiring and BEFORE collecting - ensures we're ready
-            // to receive logs when they start arriving. This avoids a race condition
-            // where logs could be emitted before the collector is subscribed.
+            // Connect if needed and wait for connection to be established
             if (connection.state.value == RokuConnectionState.DISCONNECTED) {
+                LOG.info("Connection disconnected, calling connect()")
                 connection.connect()
+                // Wait for connection to be established before collecting
+                val finalState = connection.state.first {
+                    it == RokuConnectionState.CONNECTED || it == RokuConnectionState.CONNECTION_FAILED
+                }
+                LOG.info("Connection state after wait: $finalState")
             }
 
-            connection.logs.collect { rawLine ->
-                val entry = LogParser.parse(rawLine)
-                val bufferedEntry = logBuffer.add(entry)
-                _newLogEntry.emit(bufferedEntry)
+            if (connection.state.value == RokuConnectionState.CONNECTED) {
+                LOG.info("Collecting from connection logs flow")
+                var lineCount = 0
+                connection.logs.collect { rawLine ->
+                    lineCount++
+                    if (lineCount <= 5 || lineCount % 100 == 0) {
+                        LOG.info("Received line #$lineCount: ${rawLine.take(60)}...")
+                    }
+                    val entry = LogParser.parse(rawLine)
+                    val bufferedEntry = logBuffer.add(entry)
+                    val subscriberCount = _newLogEntry.subscriptionCount.value
+                    LOG.info("Emitting entry #$lineCount to _newLogEntry, subscribers=$subscriberCount")
+                    _newLogEntry.emit(bufferedEntry)
+                }
+                LOG.info("Log collection flow ended after $lineCount lines")
+            } else {
+                LOG.warn("Cannot collect logs, connection state: ${connection.state.value}")
             }
         }
     }

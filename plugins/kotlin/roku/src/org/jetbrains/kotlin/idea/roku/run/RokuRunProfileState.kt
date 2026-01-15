@@ -46,6 +46,10 @@ class RokuRunProfileState(
 
         // Start the "process" (deployment notification)
         processHandler.startNotify()
+
+        // Notify deployment complete (terminates the process)
+        // Note: Tool window activation is handled by RokuGradleBuildBeforeRunTaskProvider
+        // after the Gradle build actually completes
         processHandler.notifyDeploymentComplete()
 
         return DefaultExecutionResult(console, processHandler)
