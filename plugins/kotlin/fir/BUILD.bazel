@@ -24,6 +24,7 @@ jvm_library(
     "@lib//:kotlinc-kotlin-compiler-common",
     "@lib//:kotlinc-kotlin-compiler-fe10",
     "@lib//:kotlinc-kotlin-compiler-fir",
+    "@lib//:kotlinc-kotlin-compiler-brs",  # BRS FIR extensions for SceneGraph Layout generation
     "@lib//:guava",
     "//platform/editor-ui-api:editor-ui",
     "//platform/projectModel-api:projectModel",

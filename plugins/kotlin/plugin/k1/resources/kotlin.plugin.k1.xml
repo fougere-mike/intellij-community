@@ -122,5 +122,7 @@
     <module name="kotlin.performanceExtendedPlugin"/>
 
     <module name="kotlin.base.scripting.k1"/>
+
+    <module name="kotlin.roku"/>
   </content>
 </idea-plugin>

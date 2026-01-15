@@ -300,5 +300,7 @@
     <module name="kotlin.k2.internal"/>
 
     <module name="kotlin.performanceExtendedPlugin"/>
+
+    <module name="kotlin.roku"/>
   </content>
 </idea-plugin>

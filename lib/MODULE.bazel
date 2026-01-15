@@ -13774,3 +13774,11 @@ http_file(
   downloaded_file_path = "core-3.5.1-sources.jar"
 )
 ### auto-generated section `maven libs` end
+
+### BRS Compiler (from Maven Local - run ./rebuild.sh in Kotlin repo first)
+# Contains BrsFirExtensionRegistrar and SceneGraphLayoutGenerator for IDE support
+http_file(
+  name = "kotlin-compiler-brs_http",
+  url = "file:///Users/Mike.Fougere/.m2/repository/org/jetbrains/kotlin/kotlin-compiler-brs/2.2.255-SNAPSHOT/kotlin-compiler-brs-2.2.255-SNAPSHOT.jar",
+  downloaded_file_path = "kotlin-compiler-brs.jar"
+)

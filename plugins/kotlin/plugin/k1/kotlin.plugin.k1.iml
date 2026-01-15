@@ -120,6 +120,7 @@
     <orderEntry type="module" module-name="kotlin.code-insight.live-templates.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.live-templates.k1" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.native" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.roku" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.idea" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.idea.k1" scope="RUNTIME" />

@@ -61,6 +61,7 @@
     <orderEntry type="module" module-name="kotlin.migration" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.ml-completion" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.native" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.roku" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.plugin-updater" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.core" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" scope="RUNTIME" />

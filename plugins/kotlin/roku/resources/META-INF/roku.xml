@@ -1,0 +1,75 @@
+<idea-plugin>
+  <resource-bundle>messages.RokuBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Tool Windows -->
+    <toolWindow id="Roku Devices"
+                anchor="right"
+                icon="org.jetbrains.kotlin.idea.roku.RokuIcons.ROKU_13"
+                factoryClass="org.jetbrains.kotlin.idea.roku.ui.toolwindow.RokuDeviceManagerToolWindowFactory"
+                secondary="true"
+                canCloseContents="false"/>
+
+    <toolWindow id="Roku Log"
+                anchor="bottom"
+                icon="org.jetbrains.kotlin.idea.roku.RokuIcons.ROKU_13"
+                factoryClass="org.jetbrains.kotlin.idea.roku.log.RokuLogToolWindowFactory"
+                canCloseContents="false"/>
+
+    <!-- Application-level Services -->
+    <applicationService
+        serviceImplementation="org.jetbrains.kotlin.idea.roku.device.service.RokuDeviceSettings"/>
+    <applicationService
+        serviceImplementation="org.jetbrains.kotlin.idea.roku.device.service.RokuDeviceService"/>
+    <applicationService
+        serviceImplementation="org.jetbrains.kotlin.idea.roku.connection.RokuConnectionManager"/>
+
+    <!-- Project-level Services -->
+    <projectService
+        serviceImplementation="org.jetbrains.kotlin.idea.roku.log.service.RokuLogService"/>
+    <projectService
+        serviceImplementation="org.jetbrains.kotlin.idea.roku.run.RokuSelectedDeviceService"/>
+
+    <!-- Run Configuration -->
+    <configurationType
+        implementation="org.jetbrains.kotlin.idea.roku.run.RokuRunConfigurationType"/>
+    <executionTargetProvider
+        implementation="org.jetbrains.kotlin.idea.roku.execution.RokuExecutionTargetProvider"/>
+    <stepsBeforeRunProvider
+        implementation="org.jetbrains.kotlin.idea.roku.run.RokuGradleBuildBeforeRunTaskProvider"/>
+    <programRunner
+        implementation="org.jetbrains.kotlin.idea.roku.run.RokuProgramRunner"/>
+
+    <!-- Notifications -->
+    <notificationGroup id="Roku"
+                       displayType="BALLOON"
+                       bundle="messages.RokuBundle"
+                       key="notification.group.roku"/>
+  </extensions>
+
+  <actions>
+    <group id="RokuLog.ToolWindow.Toolbar">
+      <action id="RokuLog.Clear"
+              icon="AllIcons.Actions.GC"
+              class="org.jetbrains.kotlin.idea.roku.log.actions.RokuLogClearAction"/>
+      <action id="RokuLog.AutoScroll"
+              icon="AllIcons.RunConfigurations.Scroll_down"
+              class="org.jetbrains.kotlin.idea.roku.log.actions.RokuLogAutoScrollAction"/>
+    </group>
+
+    <group id="RokuDeviceManager.Actions">
+      <action id="RokuDeviceManager.Refresh"
+              icon="AllIcons.Actions.Refresh"
+              class="org.jetbrains.kotlin.idea.roku.ui.toolwindow.RokuRefreshDevicesAction"/>
+      <action id="RokuDeviceManager.AddDevice"
+              icon="AllIcons.General.Add"
+              class="org.jetbrains.kotlin.idea.roku.ui.toolwindow.RokuAddDeviceAction"/>
+      <action id="RokuDeviceManager.RemoveDevice"
+              icon="AllIcons.General.Remove"
+              class="org.jetbrains.kotlin.idea.roku.ui.toolwindow.RokuRemoveDeviceAction"/>
+      <separator/>
+      <action id="RokuDeviceManager.TestAuth"
+              class="org.jetbrains.kotlin.idea.roku.ui.toolwindow.RokuTestAuthAction"/>
+    </group>
+  </actions>
+</idea-plugin>

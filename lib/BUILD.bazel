@@ -9536,3 +9536,17 @@ jvm_import(
   visibility = ["//visibility:public"]
 )
 ### auto-generated section `maven libs` end
+
+### BRS Compiler (from Maven Local)
+jvm_import(
+  name = "kotlinc-kotlin-compiler-brs",
+  jar = "@kotlin-compiler-brs_http//file",
+  visibility = ["//visibility:public"]
+)
+
+java_library(
+  name = "kotlinc-kotlin-compiler-brs-provided",
+  exports = [":kotlinc-kotlin-compiler-brs"],
+  neverlink = True,
+  visibility = ["//visibility:public"]
+)

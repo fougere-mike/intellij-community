@@ -1,0 +1,35 @@
+### auto-generated section `build kotlin.roku` start
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_resources")
+
+jvm_resources(
+  name = "roku_resources",
+  files = glob(["resources/**/*"]),
+  strip_prefix = "resources"
+)
+
+jvm_library(
+  name = "roku",
+  module_name = "kotlin.roku",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True),
+  deps = [
+    "@lib//:kotlin-stdlib",
+    "@lib//:kotlinx-coroutines-core",
+    "//platform/core-api:core",
+    "//platform/platform-api:ide",
+    "//platform/platform-impl:ide-impl",
+    "//platform/editor-ui-api:editor",
+    "//platform/execution:execution",
+    "//platform/execution-impl:execution-impl",
+    "//platform/external-system-api:externalSystem",
+    "//platform/external-system-impl:externalSystem-impl",
+    "//platform/lang-api:lang",
+    "//platform/lang-impl",
+    "//platform/credential-store:credentialStore",
+    "//plugins/gradle:gradle-common",
+    "//plugins/kotlin/base/util",
+    "//plugins/kotlin/base/resources:kotlin-base-resources",
+  ],
+  runtime_deps = [":roku_resources"]
+)
+### auto-generated section `build kotlin.roku` end
