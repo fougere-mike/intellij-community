@@ -1,0 +1,2 @@
+BAZELISK_BASE_URL=https://github.com/JetBrains/bazel/releases/download
+USE_BAZEL_VERSION=8.2.1-jb_20250522_59
