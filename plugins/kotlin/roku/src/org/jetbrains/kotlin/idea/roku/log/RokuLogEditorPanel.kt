@@ -46,7 +46,7 @@ class RokuLogEditorPanel(
     private val rootPanel: JPanel
 
     private val _autoScrollEnabled = AtomicBoolean(true)
-    private val userScrolledBack = AtomicBoolean(false)
+    @Volatile private var lastProgrammaticScrollTime = 0L
 
     /** The root component */
     val component: JComponent
@@ -58,7 +58,6 @@ class RokuLogEditorPanel(
             _autoScrollEnabled.set(value)
             if (value) {
                 scrollToEnd()
-                userScrolledBack.set(false)
             }
         }
 
@@ -74,7 +73,17 @@ class RokuLogEditorPanel(
 
         // Track user scroll position to auto-disable auto-scroll
         editor.scrollingModel.addVisibleAreaListener { _ ->
-            if (!_autoScrollEnabled.get()) return@addVisibleAreaListener
+            val timeSinceLastScroll = System.currentTimeMillis() - lastProgrammaticScrollTime
+
+            if (!_autoScrollEnabled.get()) {
+                LOG.info("VisibleAreaListener: autoScroll already disabled, skipping")
+                return@addVisibleAreaListener
+            }
+
+            if (timeSinceLastScroll < 100) {
+                LOG.info("VisibleAreaListener: ignoring, only ${timeSinceLastScroll}ms since programmatic scroll")
+                return@addVisibleAreaListener
+            }
 
             // Check if user scrolled away from bottom
             val scrollPane = editor.scrollPane
@@ -84,9 +93,12 @@ class RokuLogEditorPanel(
 
             val atBottom = viewRect.y + viewRect.height >= viewSize.height - 50
 
-            if (!atBottom && !userScrolledBack.get()) {
-                userScrolledBack.set(true)
-                // User scrolled back - disable auto-scroll
+            LOG.info("VisibleAreaListener: timeSinceScroll=${timeSinceLastScroll}ms, " +
+                     "viewRect=(${viewRect.y}, ${viewRect.height}), viewSize=${viewSize.height}, " +
+                     "atBottom=$atBottom (${viewRect.y + viewRect.height} >= ${viewSize.height - 50})")
+
+            if (!atBottom) {
+                LOG.info("VisibleAreaListener: DISABLING auto-scroll because not at bottom")
                 _autoScrollEnabled.set(false)
             }
         }
@@ -168,6 +180,12 @@ class RokuLogEditorPanel(
             if (entry.level.priority >= minLevel.priority &&
                 (filter.isEmpty() || matchesFilter(entry, filter))) {
                 LOG.info("RokuLogEditorPanel: appendLogEntry() on EDT, inserting at position ${document.textLength}, entry: ${entry.rawLine.take(40)}...")
+
+                // Set timestamp BEFORE modifying document to prevent race with VisibleAreaListener
+                if (_autoScrollEnabled.get()) {
+                    lastProgrammaticScrollTime = System.currentTimeMillis()
+                }
+
                 document.insertString(document.textLength, text)
 
                 if (_autoScrollEnabled.get()) {
@@ -206,7 +224,6 @@ class RokuLogEditorPanel(
         ApplicationManager.getApplication().invokeLater {
             LOG.info("RokuLogEditorPanel: clearDocument() executing on EDT, current length=${document.textLength}")
             document.setText("")
-            userScrolledBack.set(false)
         }
     }
 
@@ -215,6 +232,12 @@ class RokuLogEditorPanel(
         ApplicationManager.getApplication().invokeLater {
             val filteredLogs = logService.getFilteredLogs()
             LOG.info("RokuLogEditorPanel: reloadFilteredLogs() on EDT, ${filteredLogs.size} logs, current docLength=${document.textLength}")
+
+            // Set timestamp BEFORE modifying document to prevent race with VisibleAreaListener
+            if (_autoScrollEnabled.get()) {
+                lastProgrammaticScrollTime = System.currentTimeMillis()
+            }
+
             document.setText("")
 
             val text = filteredLogs.joinToString("") { formatLogEntry(it) }
@@ -228,13 +251,15 @@ class RokuLogEditorPanel(
     }
 
     private fun scrollToEnd() {
+        LOG.info("scrollToEnd() called, scheduling invokeLater")
         ApplicationManager.getApplication().invokeLater {
+            lastProgrammaticScrollTime = System.currentTimeMillis()
+            LOG.info("scrollToEnd() executing, set lastProgrammaticScrollTime=$lastProgrammaticScrollTime")
             val scrollingModel = editor.scrollingModel
             scrollingModel.scrollTo(
                 editor.offsetToLogicalPosition(document.textLength),
                 ScrollType.MAKE_VISIBLE
             )
-            userScrolledBack.set(false)
         }
     }
 
