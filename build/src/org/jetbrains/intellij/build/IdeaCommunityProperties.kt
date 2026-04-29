@@ -35,10 +35,10 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     )
   }
 
-  override val baseFileName: String = "idea"
+  override val baseFileName: String = "brightscript-studio"
 
   init {
-    platformPrefix = "Idea"
+    platformPrefix = "BrightScriptStudio"
     applicationInfoModule = "intellij.idea.community.customization"
     scrambleMainJar = false
     useSplash = true
@@ -141,9 +141,9 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
       fileAssociations = listOf("java", "gradle", "groovy", "kt", "kts", "pom")
     }
 
-    override fun getFullNameIncludingEdition(appInfo: ApplicationInfoProperties): String = "IntelliJ IDEA Community Edition"
+    override fun getFullNameIncludingEdition(appInfo: ApplicationInfoProperties): String = "BrightScript Studio"
 
-    override fun getFullNameIncludingEditionAndVendor(appInfo: ApplicationInfoProperties): String = "IntelliJ IDEA Community Edition"
+    override fun getFullNameIncludingEditionAndVendor(appInfo: ApplicationInfoProperties): String = "BrightScript Studio"
 
     override fun getUninstallFeedbackPageUrl(appInfo: ApplicationInfoProperties): String =
       "https://www.jetbrains.com/idea/uninstall/?edition=IC-${appInfo.majorVersion}.${appInfo.minorVersion}"
@@ -159,7 +159,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
         "Together, powerful static code analysis and ergonomic design make development not only productive but also an enjoyable experience."
     }
 
-    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "idea-IC-$buildNumber"
+    override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "brightscript-studio-$buildNumber"
 
     override fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture, targetLibcImpl: LibcImpl): Sequence<String> =
       super.generateExecutableFilesPatterns(context, includeRuntime, arch, targetLibcImpl)
@@ -171,16 +171,15 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     init {
       icnsPath = "${communityHomeDir}/build/conf/ideaCE/mac/images/idea.icns"
       icnsPathForEAP = "${communityHomeDir}/build/conf/ideaCE/mac/images/communityEAP.icns"
-      urlSchemes = listOf("idea")
+      urlSchemes = listOf("brightscriptstudio")
       associateIpr = true
       fileAssociations = FileAssociation.from("java", "groovy", "kt", "kts")
-      bundleIdentifier = "com.jetbrains.intellij.ce"
+      bundleIdentifier = "com.nuvyyo.brightscriptstudio"
       dmgImagePath = "${communityHomeDir}/build/conf/ideaCE/mac/images/dmg_background.tiff"
     }
 
     override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String =
-      if (appInfo.isEAP) "IntelliJ IDEA ${appInfo.majorVersion}.${appInfo.minorVersionMainPart} CE EAP.app"
-      else "IntelliJ IDEA CE.app"
+      "BrightScript Studio.app"
 
     override fun generateExecutableFilesPatterns(context: BuildContext, includeRuntime: Boolean, arch: JvmArchitecture): Sequence<String> =
       super.generateExecutableFilesPatterns(context, includeRuntime, arch)
@@ -189,9 +188,9 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
   }
 
   override fun getSystemSelector(appInfo: ApplicationInfoProperties, buildNumber: String): String =
-    "IdeaIC${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
+    "BrightScriptStudio${appInfo.majorVersion}.${appInfo.minorVersionMainPart}"
 
-  override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "ideaIC-$buildNumber"
+  override fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String = "brightscript-studio-$buildNumber"
 
-  override fun getOutputDirectoryName(appInfo: ApplicationInfoProperties): String = "idea-ce"
+  override fun getOutputDirectoryName(appInfo: ApplicationInfoProperties): String = "brightscript-studio"
 }
