@@ -15,6 +15,8 @@ internal object OpenSourceCommunityInstallersBuildTarget {
       incrementalCompilation = true
       useCompiledClassesFromProjectOutput = false
       buildStepsToSkip += BuildOptions.MAC_SIGN_STEP
+      buildStepsToSkip += BuildOptions.MAC_DMG_STEP
+      buildStepsToSkip += BuildOptions.MAC_SIT_PUBLICATION_STEP
       buildStepsToSkip += BuildOptions.WIN_SIGN_STEP
       if (OsFamily.currentOs == OsFamily.MACOS) {
         // generally not needed; doesn't work well on build agents
