@@ -7,7 +7,6 @@
                 anchor="right"
                 icon="org.jetbrains.kotlin.idea.roku.RokuIcons.ROKU_13"
                 factoryClass="org.jetbrains.kotlin.idea.roku.ui.toolwindow.RokuDeviceManagerToolWindowFactory"
-                secondary="true"
                 canCloseContents="false"/>
 
     <toolWindow id="Roku Log"
