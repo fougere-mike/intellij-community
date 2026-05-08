@@ -44,6 +44,16 @@
                        displayType="BALLOON"
                        bundle="messages.RokuBundle"
                        key="notification.group.roku"/>
+
+    <!-- BrightScript .brs editor support -->
+    <fileType name="BrightScript"
+              implementationClass="org.jetbrains.kotlin.idea.roku.language.brs.BrsFileType"
+              fieldName="INSTANCE"
+              language="BrightScript"
+              extensions="brs"/>
+    <lang.syntaxHighlighterFactory language="BrightScript"
+                                   implementationClass="org.jetbrains.kotlin.idea.roku.language.brs.BrsSyntaxHighlighterFactory"/>
+    <colorSettingsPage implementation="org.jetbrains.kotlin.idea.roku.language.brs.BrsColorSettingsPage"/>
   </extensions>
 
   <!-- BRS FIR Extensions for K2 analysis -->
