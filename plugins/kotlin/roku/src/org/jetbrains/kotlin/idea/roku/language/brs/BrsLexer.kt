@@ -215,7 +215,7 @@ class BrsLexer : LexerBase() {
             val savedEnd = tokenEnd
 
             // Skip whitespace
-            while (tokenEnd < bufferEnd && buffer[tokenEnd] == ' ') {
+            while (tokenEnd < bufferEnd && (buffer[tokenEnd] == ' ' || buffer[tokenEnd] == '\t')) {
                 tokenEnd++
             }
 

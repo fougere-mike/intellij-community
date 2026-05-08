@@ -97,7 +97,6 @@ object BrsTokenTypes {
 
     // Comments
     val COMMENT = BrsElementType("COMMENT")     // ' or REM
-    val BLOCK_COMMENT = BrsElementType("BLOCK_COMMENT")
 
     // Whitespace and newlines
     val WHITESPACE = BrsElementType("WHITESPACE")
@@ -131,7 +130,7 @@ object BrsTokenTypes {
 
     val STRINGS = TokenSet.create(STRING_LITERAL)
 
-    val COMMENTS = TokenSet.create(COMMENT, BLOCK_COMMENT)
+    val COMMENTS = TokenSet.create(COMMENT)
 
     val OPERATORS = TokenSet.create(
         EQ, NE, LT, GT, LE, GE,

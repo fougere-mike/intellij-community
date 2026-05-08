@@ -1,6 +1,5 @@
 package org.jetbrains.kotlin.idea.roku.language.brs
 
-import com.intellij.lexer.Lexer
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -71,8 +70,7 @@ class BrsSyntaxHighlighter : SyntaxHighlighterBase() {
             tokenType == BrsTokenTypes.STRING_LITERAL -> STRING_KEYS
 
             // Comments
-            tokenType == BrsTokenTypes.COMMENT ||
-            tokenType == BrsTokenTypes.BLOCK_COMMENT -> COMMENT_KEYS
+            tokenType == BrsTokenTypes.COMMENT -> COMMENT_KEYS
 
             // Operators
             tokenType in BrsTokenTypes.OPERATORS -> OPERATOR_KEYS
