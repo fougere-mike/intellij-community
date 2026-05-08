@@ -179,7 +179,7 @@ class BrsLexer : LexerBase() {
                         tokenEnd++
                     }
                 }
-                c == '#' || c == '!' || c == '%' || c == '&' || c == 'd' || c == 'D' -> {
+                c == '#' || c == '!' || c == '%' || c == '&' -> {
                     // Type suffixes
                     tokenEnd++
                     break
