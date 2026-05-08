@@ -1,5 +1,6 @@
 package org.jetbrains.kotlin.idea.roku.language.brs
 
+import com.intellij.lexer.Lexer
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
